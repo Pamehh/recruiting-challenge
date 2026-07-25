@@ -32,12 +32,17 @@ async function refresh() {
   ordersTbody.innerHTML = '';
   for (const o of ordersRes.orders ?? []) {
     const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${new Date(o.created_at).toLocaleDateString()}</td>
-      <td>${o.customer_email}</td>
-      <td>${o.type}</td>
-      <td>${money(o.total_amount)}</td>
-    `;
+    const cells = [
+      new Date(o.created_at).toLocaleDateString(),
+      o.customer_email,
+      o.type,
+      money(o.total_amount),
+    ];
+    for (const value of cells) {
+      const td = document.createElement('td');
+      td.textContent = value;
+      tr.appendChild(td);
+    }
     ordersTbody.appendChild(tr);
   }
 }
