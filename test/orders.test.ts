@@ -53,3 +53,18 @@ test('orders DAL: getById does NOT return an order belonging to a different merc
   const got = ordersDal.getById('o3', 'm_other');
   assert.equal(got, undefined);
 });
+
+test('orders DAL: sumAmountByMerchant subtracts refunds instead of adding them', () => {
+  initSchema();
+  db.prepare(`INSERT OR IGNORE INTO merchants (id, name) VALUES ('m_refund_test', 'RefundTest')`).run();
+  ordersDal.create({
+    id: 'sale-1', merchant_id: 'm_refund_test', customer_email: 'x@y.com',
+    total_amount: 1000, type: 'sale', status: 'completed',
+  });
+  ordersDal.create({
+    id: 'refund-1', merchant_id: 'm_refund_test', customer_email: 'x@y.com',
+    total_amount: 400, type: 'refund', status: 'completed',
+  });
+  const net = ordersDal.sumAmountByMerchant('m_refund_test', '2000-01-01', '2100-01-01');
+  assert.equal(net, 600); 
+});

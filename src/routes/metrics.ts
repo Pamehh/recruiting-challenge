@@ -26,7 +26,8 @@ metricsRouter.get('/summary', (req, res) => {
 
   const avgOrderRow = metricsDb
     .prepare(
-      `SELECT COALESCE(AVG(total_amount), 0) AS avg FROM orders WHERE merchant_id = ?`,
+      `SELECT COALESCE(AVG(CASE WHEN type = 'refund' THEN -total_amount ELSE total_amount END), 0) 
+       AS avg FROM orders WHERE merchant_id = ?`,
     )
     .get(merchantId) as { avg: number };
 
@@ -44,7 +45,8 @@ metricsRouter.get('/top-customers', (req, res) => {
 
   const rows = metricsDb
     .prepare(
-      `SELECT customer_email, COUNT(*) AS order_count, SUM(total_amount) AS total_spent
+      `SELECT customer_email, COUNT(*) AS order_count,
+        SUM(CASE WHEN type = 'refund' THEN -total_amount ELSE total_amount END) AS total_spent
        FROM orders
        WHERE merchant_id = ?
        GROUP BY customer_email
