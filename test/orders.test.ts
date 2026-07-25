@@ -23,7 +23,7 @@ test('orders DAL: create + listByMerchant returns the order', () => {
   assert.equal(list[0]!.total_amount, 5000);
 });
 
-test('orders DAL: getById returns the order', () => {
+test('orders DAL: getById returns the order for the owning merchant', () => {
   initSchema();
   db.prepare(`INSERT OR IGNORE INTO merchants (id, name) VALUES ('m_test', 'Test')`).run();
   ordersDal.create({
@@ -34,6 +34,22 @@ test('orders DAL: getById returns the order', () => {
     type: 'sale',
     status: 'completed',
   });
-  const got = ordersDal.getById('o2');
+  const got = ordersDal.getById('o2', 'm_test');
   assert.equal(got?.total_amount, 1200);
+});
+
+test('orders DAL: getById does NOT return an order belonging to a different merchant', () => {
+  initSchema();
+  db.prepare(`INSERT OR IGNORE INTO merchants (id, name) VALUES ('m_test', 'Test')`).run();
+  db.prepare(`INSERT OR IGNORE INTO merchants (id, name) VALUES ('m_other', 'Other')`).run();
+  ordersDal.create({
+    id: 'o3',
+    merchant_id: 'm_test',
+    customer_email: 'c@d.com',
+    total_amount: 1200,
+    type: 'sale',
+    status: 'completed',
+  });
+  const got = ordersDal.getById('o3', 'm_other');
+  assert.equal(got, undefined);
 });
